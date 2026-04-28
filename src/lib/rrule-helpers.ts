@@ -6,6 +6,8 @@ function buildRRule(reminder: Pick<Reminder, "date" | "recurrenceType" | "rruleS
   const dtstart = startOfDay(new Date(reminder.date));
 
   switch (reminder.recurrenceType) {
+    case "DAILY":
+      return new RRule({ freq: RRule.DAILY, dtstart });
     case "YEARLY":
       return new RRule({ freq: RRule.YEARLY, dtstart });
     case "MONTHLY":
@@ -73,6 +75,7 @@ export function daysUntilNext(
 
 export function recurrenceLabel(recurrenceType: RecurrenceType, rruleString?: string | null): string {
   switch (recurrenceType) {
+    case "DAILY":  return "Every day";
     case "YEARLY": return "Every year";
     case "MONTHLY": return "Every month";
     case "WEEKLY": return "Every week";
@@ -93,13 +96,10 @@ export function recurrenceLabel(recurrenceType: RecurrenceType, rruleString?: st
 export function buildRRuleStringFromType(type: RecurrenceType, date: Date): string | undefined {
   const dtstart = startOfDay(date);
   switch (type) {
-    case "YEARLY":
-      return new RRule({ freq: RRule.YEARLY, dtstart }).toString();
-    case "MONTHLY":
-      return new RRule({ freq: RRule.MONTHLY, dtstart }).toString();
-    case "WEEKLY":
-      return new RRule({ freq: RRule.WEEKLY, dtstart }).toString();
-    default:
-      return undefined;
+    case "DAILY":   return new RRule({ freq: RRule.DAILY,   dtstart }).toString();
+    case "YEARLY":  return new RRule({ freq: RRule.YEARLY,  dtstart }).toString();
+    case "MONTHLY": return new RRule({ freq: RRule.MONTHLY, dtstart }).toString();
+    case "WEEKLY":  return new RRule({ freq: RRule.WEEKLY,  dtstart }).toString();
+    default:        return undefined;
   }
 }

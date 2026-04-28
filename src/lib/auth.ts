@@ -4,7 +4,7 @@ import Credentials from "next-auth/providers/credentials";
 import Google from "next-auth/providers/google";
 import bcrypt from "bcryptjs";
 import { prisma } from "./prisma";
-import { ensureSystemCategories } from "./categories";
+import { ensureSystemCategories, pruneSystemCategories } from "./categories";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: PrismaAdapter(prisma),
@@ -58,6 +58,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     async signIn({ user }) {
       if (user.id) {
         await ensureSystemCategories(user.id).catch(console.error);
+        await pruneSystemCategories(user.id).catch(console.error);
       }
       return true;
     },

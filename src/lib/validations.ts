@@ -5,7 +5,7 @@ export const createReminderSchema = z.object({
   categoryId: z.string().min(1, "Category is required"),
   date: z.coerce.date({ required_error: "Date is required" }),
   isAllDay: z.boolean().default(true),
-  recurrenceType: z.enum(["NONE", "YEARLY", "MONTHLY", "WEEKLY", "CUSTOM"]).default("NONE"),
+  recurrenceType: z.enum(["NONE", "DAILY", "WEEKLY", "MONTHLY", "YEARLY", "CUSTOM"]).default("NONE"),
   rruleString: z.string().optional(),
   advanceDays: z.coerce.number().int().min(0).max(365).default(7),
   priority: z.enum(["LOW", "MEDIUM", "HIGH"]).default("MEDIUM"),
@@ -19,8 +19,9 @@ export const updateReminderSchema = createReminderSchema.partial().extend({
 
 export const createCategorySchema = z.object({
   name: z.string().min(1, "Name is required").max(50),
-  icon: z.string().min(1).max(10),
+  icon: z.string().min(1).max(30),
   color: z.string().regex(/^#[0-9A-Fa-f]{6}$/, "Must be a valid hex color"),
+  defaultRecurrence: z.enum(["NONE", "DAILY", "WEEKLY", "MONTHLY", "YEARLY"]).default("NONE"),
 });
 
 export const updateCategorySchema = createCategorySchema.partial();

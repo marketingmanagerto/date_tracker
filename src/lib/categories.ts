@@ -1,21 +1,18 @@
 import { prisma } from "./prisma";
 
-const SYSTEM_CATEGORIES = [
-  { name: "Birthday", slug: "birthday", icon: "🎂", color: "#FF6B6B" },
-  { name: "Anniversary", slug: "anniversary", icon: "💍", color: "#FF85A1" },
-  { name: "Holiday", slug: "holiday", icon: "🎉", color: "#FFD166" },
-  { name: "Medical / Health", slug: "medical", icon: "🏥", color: "#06D6A0" },
-  { name: "Legal / Document", slug: "legal", icon: "📋", color: "#118AB2" },
-  { name: "Financial / Subscription", slug: "financial", icon: "💳", color: "#2D6A9F" },
-  { name: "Vehicle", slug: "vehicle", icon: "🚗", color: "#4ECDC4" },
-  { name: "Property / Home", slug: "property", icon: "🏠", color: "#45B7D1" },
-  { name: "Pet", slug: "pet", icon: "🐾", color: "#96CEB4" },
-  { name: "Travel", slug: "travel", icon: "✈️", color: "#88D8B0" },
-  { name: "Professional / Work", slug: "work", icon: "💼", color: "#6C63FF" },
-  { name: "Education", slug: "education", icon: "🎓", color: "#A8DADC" },
-  { name: "Memorial", slug: "memorial", icon: "🕯️", color: "#8B8B8B" },
-  { name: "Custom", slug: "custom", icon: "⭐", color: "#FFA07A" },
+export const SYSTEM_CATEGORIES = [
+  { name: "Birthday",    slug: "birthday",    icon: "cake",  color: "#FF6B6B" },
+  { name: "Anniversary", slug: "anniversary", icon: "heart", color: "#FF85A1" },
 ] as const;
+
+// Lucide icon names available for custom categories
+export const CATEGORY_ICONS = [
+  "cake", "heart", "star", "bell", "briefcase",
+  "car", "home", "plane", "stethoscope", "graduation-cap",
+  "dog", "credit-card", "scale", "flame", "gift", "music",
+] as const;
+
+export type CategoryIconName = typeof CATEGORY_ICONS[number];
 
 export async function ensureSystemCategories(userId: string): Promise<void> {
   const existing = await prisma.category.findMany({
@@ -26,11 +23,38 @@ export async function ensureSystemCategories(userId: string): Promise<void> {
   const existingSlugs = new Set(existing.map((c) => c.slug));
   const missing = SYSTEM_CATEGORIES.filter((c) => !existingSlugs.has(c.slug));
 
-  if (missing.length === 0) return;
+  if (missing.length > 0) {
+    await prisma.category.createMany({
+      data: missing.map((c) => ({ ...c, userId, isSystem: true })),
+    });
+  }
 
-  await prisma.category.createMany({
-    data: missing.map((c) => ({ ...c, userId, isSystem: true })),
-  });
+  // Keep existing system categories in sync with canonical icon/name/color
+  for (const cat of SYSTEM_CATEGORIES) {
+    if (existingSlugs.has(cat.slug)) {
+      await prisma.category.updateMany({
+        where: { userId, isSystem: true, slug: cat.slug },
+        data: { icon: cat.icon, name: cat.name, color: cat.color },
+      });
+    }
+  }
 }
 
-export { SYSTEM_CATEGORIES };
+// Remove system categories no longer in SYSTEM_CATEGORIES (only if they have no reminders)
+export async function pruneSystemCategories(userId: string): Promise<void> {
+  const validSlugs = SYSTEM_CATEGORIES.map((c) => c.slug);
+
+  const stale = await prisma.category.findMany({
+    where: {
+      userId,
+      isSystem: true,
+      slug: { notIn: validSlugs },
+    },
+    include: { _count: { select: { reminders: true } } },
+  });
+
+  const deletable = stale.filter((c) => c._count.reminders === 0).map((c) => c.id);
+  if (deletable.length === 0) return;
+
+  await prisma.category.deleteMany({ where: { id: { in: deletable } } });
+}

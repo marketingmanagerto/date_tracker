@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { LayoutGrid, List, Search, X } from "lucide-react";
 import { daysUntilNext } from "@/lib/rrule-helpers";
+import { ICON_MAP } from "@/components/reminders/CategoryIcon";
 
 const STATUS_TABS = ["ACTIVE", "SNOOZED", "ARCHIVED", "ALL"] as const;
 type StatusTab = typeof STATUS_TABS[number];
@@ -99,22 +100,26 @@ export function RemindersClient({ reminders, categories }: Props) {
         >
           All categories
         </Badge>
-        {categories.map((cat) => (
-          <Badge
-            key={cat.id}
-            variant={categoryFilter === cat.id ? "default" : "outline"}
-            className="cursor-pointer"
-            onClick={() => setCategoryFilter(categoryFilter === cat.id ? null : cat.id)}
-          >
-            {cat.icon} {cat.name}
-          </Badge>
-        ))}
+        {categories.map((cat) => {
+          const Icon = ICON_MAP[cat.icon];
+          return (
+            <Badge
+              key={cat.id}
+              variant={categoryFilter === cat.id ? "default" : "outline"}
+              className="cursor-pointer flex items-center gap-1"
+              onClick={() => setCategoryFilter(categoryFilter === cat.id ? null : cat.id)}
+            >
+              {Icon && <Icon size={11} strokeWidth={1.75} />}
+              {cat.name}
+            </Badge>
+          );
+        })}
       </div>
 
       {/* Results */}
       {filtered.length === 0 ? (
         <div className="text-center py-16 text-muted-foreground">
-          <p className="text-4xl mb-3">📭</p>
+          <p className="text-4xl mb-3">🗂️</p>
           <p className="font-medium">No reminders found</p>
           <p className="text-sm">Try adjusting your filters or add a new reminder.</p>
         </div>

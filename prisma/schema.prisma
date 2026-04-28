@@ -66,14 +66,15 @@ model VerificationToken {
 // ---- Core App Models ----
 
 model Category {
-  id       String  @id @default(cuid())
-  userId   String
-  name     String
-  slug     String
-  icon     String
-  color    String
-  isSystem Boolean @default(false)
-  createdAt DateTime @default(now())
+  id                String         @id @default(cuid())
+  userId            String
+  name              String
+  slug              String
+  icon              String
+  color             String
+  isSystem          Boolean        @default(false)
+  defaultRecurrence RecurrenceType @default(NONE)
+  createdAt         DateTime       @default(now())
 
   user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
   reminders Reminder[]
@@ -109,9 +110,10 @@ model Reminder {
 
 enum RecurrenceType {
   NONE
-  YEARLY
-  MONTHLY
+  DAILY
   WEEKLY
+  MONTHLY
+  YEARLY
   CUSTOM
 }
 
