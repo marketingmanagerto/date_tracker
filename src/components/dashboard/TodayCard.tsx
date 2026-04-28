@@ -1,6 +1,7 @@
 import type { ReminderWithCategory } from "@/types";
 import { CategoryIcon } from "@/components/reminders/CategoryIcon";
 import Link from "next/link";
+import { CalendarDays, Sparkles } from "lucide-react";
 
 interface TodayCardProps {
   reminders: ReminderWithCategory[];
@@ -10,7 +11,7 @@ export function TodayCard({ reminders }: TodayCardProps) {
   return (
     <div className="bg-white dark:bg-gray-900 rounded-xl border">
       <div className="px-5 py-4 border-b flex items-center gap-2">
-        <span className="text-xl">📅</span>
+        <CalendarDays className="h-4 w-4 text-muted-foreground" />
         <h3 className="font-semibold text-gray-900 dark:text-white">Today</h3>
         {reminders.length > 0 && (
           <span className="ml-auto text-xs bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300 px-2 py-0.5 rounded-full font-medium">
@@ -20,7 +21,7 @@ export function TodayCard({ reminders }: TodayCardProps) {
       </div>
       {reminders.length === 0 ? (
         <div className="px-5 py-8 text-center text-muted-foreground">
-          <p className="text-3xl mb-2">🌟</p>
+          <Sparkles className="h-8 w-8 mx-auto mb-2 text-indigo-300 dark:text-indigo-700" />
           <p className="text-sm font-medium">Nothing today — enjoy your day!</p>
         </div>
       ) : (

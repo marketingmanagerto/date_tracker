@@ -8,7 +8,7 @@ import { ReminderRow } from "./ReminderRow";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { LayoutGrid, List, Search, X } from "lucide-react";
+import { LayoutGrid, List, Search, X, Inbox } from "lucide-react";
 import { daysUntilNext } from "@/lib/rrule-helpers";
 import { ICON_MAP } from "@/components/reminders/CategoryIcon";
 
@@ -119,7 +119,7 @@ export function RemindersClient({ reminders, categories }: Props) {
       {/* Results */}
       {filtered.length === 0 ? (
         <div className="text-center py-16 text-muted-foreground">
-          <p className="text-4xl mb-3">🗂️</p>
+          <Inbox className="h-10 w-10 mx-auto mb-3 text-muted-foreground/50" />
           <p className="font-medium">No reminders found</p>
           <p className="text-sm">Try adjusting your filters or add a new reminder.</p>
         </div>

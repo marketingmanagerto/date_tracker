@@ -3,6 +3,7 @@ import { CategoryIcon } from "@/components/reminders/CategoryIcon";
 import { urgencyStyle, formatDateShort } from "@/lib/utils";
 import { daysUntilNext } from "@/lib/rrule-helpers";
 import Link from "next/link";
+import { CalendarRange, CheckCircle2 } from "lucide-react";
 
 interface UpcomingListProps {
   groups: UpcomingGroup[];
@@ -12,7 +13,7 @@ export function UpcomingList({ groups }: UpcomingListProps) {
   if (groups.length === 0) {
     return (
       <div className="bg-white dark:bg-gray-900 rounded-xl border px-5 py-8 text-center text-muted-foreground">
-        <p className="text-3xl mb-2">✅</p>
+        <CheckCircle2 className="h-8 w-8 mx-auto mb-2 text-green-400 dark:text-green-700" />
         <p className="text-sm font-medium">Nothing coming up in the next 30 days</p>
       </div>
     );
@@ -21,7 +22,7 @@ export function UpcomingList({ groups }: UpcomingListProps) {
   return (
     <div className="bg-white dark:bg-gray-900 rounded-xl border">
       <div className="px-5 py-4 border-b flex items-center gap-2">
-        <span className="text-xl">🗓️</span>
+        <CalendarRange className="h-4 w-4 text-muted-foreground" />
         <h3 className="font-semibold text-gray-900 dark:text-white">Upcoming</h3>
         <span className="text-xs text-muted-foreground ml-1">next 30 days</span>
       </div>

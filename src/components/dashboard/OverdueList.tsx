@@ -2,6 +2,7 @@ import type { ReminderWithCategory } from "@/types";
 import { CategoryIcon } from "@/components/reminders/CategoryIcon";
 import { daysUntilNext } from "@/lib/rrule-helpers";
 import Link from "next/link";
+import { AlertTriangle } from "lucide-react";
 
 interface OverdueListProps {
   reminders: ReminderWithCategory[];
@@ -13,7 +14,7 @@ export function OverdueList({ reminders }: OverdueListProps) {
   return (
     <div className="bg-white dark:bg-gray-900 rounded-xl border border-red-200 dark:border-red-900/30">
       <div className="px-5 py-4 border-b border-red-100 dark:border-red-900/30 flex items-center gap-2 bg-red-50 dark:bg-red-950/20 rounded-t-xl">
-        <span className="text-xl">⚠️</span>
+        <AlertTriangle className="h-4 w-4 text-red-500" />
         <h3 className="font-semibold text-red-700 dark:text-red-400">Needs Attention</h3>
         <span className="ml-auto text-xs bg-red-200 text-red-800 dark:bg-red-800/40 dark:text-red-300 px-2 py-0.5 rounded-full font-medium">
           {reminders.length}
