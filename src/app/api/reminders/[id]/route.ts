@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { Prisma } from "@prisma/client";
 import { updateReminderSchema } from "@/lib/validations";
 
 type Params = { params: Promise<{ id: string }> };
@@ -33,7 +34,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
 
   const reminder = await prisma.reminder.update({
     where: { id },
-    data: parsed.data,
+    data: parsed.data as Prisma.ReminderUncheckedUpdateInput,
     include: { category: true },
   });
 
