@@ -269,7 +269,7 @@ export function SettingsClient({ settings, categories, user }: SettingsClientPro
           {/* Default recurrence */}
           <div className="space-y-1.5">
             <Label>Default recurrence</Label>
-            <Select value={newCatRecurrence} onValueChange={setNewCatRecurrence}>
+            <Select value={newCatRecurrence} onValueChange={(v) => v && setNewCatRecurrence(v)}>
               <SelectTrigger className="w-full sm:w-48">
                 <SelectValue />
               </SelectTrigger>
