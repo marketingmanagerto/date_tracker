@@ -1,0 +1,162 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// ---- Auth (NextAuth v5 standard tables) ----
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  emailVerified DateTime?
+  image         String?
+  password      String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  accounts         Account[]
+  sessions         Session[]
+  reminders        Reminder[]
+  categories       Category[]
+  settings         UserSettings?
+  notificationLogs NotificationLog[]
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// ---- Core App Models ----
+
+model Category {
+  id       String  @id @default(cuid())
+  userId   String
+  name     String
+  slug     String
+  icon     String
+  color    String
+  isSystem Boolean @default(false)
+  createdAt DateTime @default(now())
+
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reminders Reminder[]
+
+  @@unique([userId, slug])
+}
+
+model Reminder {
+  id         String @id @default(cuid())
+  userId     String
+  categoryId String
+
+  title    String
+  notes    String?
+  date     DateTime
+  isAllDay Boolean  @default(true)
+
+  recurrenceType RecurrenceType @default(NONE)
+  rruleString    String?
+
+  advanceDays Int            @default(7)
+  priority    Priority       @default(MEDIUM)
+  status      ReminderStatus @default(ACTIVE)
+  snoozedUntil DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user             User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  category         Category          @relation(fields: [categoryId], references: [id])
+  notificationLogs NotificationLog[]
+}
+
+enum RecurrenceType {
+  NONE
+  YEARLY
+  MONTHLY
+  WEEKLY
+  CUSTOM
+}
+
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+enum ReminderStatus {
+  ACTIVE
+  SNOOZED
+  ARCHIVED
+}
+
+model UserSettings {
+  id                   String          @id @default(cuid())
+  userId               String          @unique
+  emailNotifications   Boolean         @default(true)
+  defaultAdvanceDays   Int             @default(7)
+  digestTime           String          @default("08:00")
+  timezone             String          @default("UTC")
+  emailDigestFrequency DigestFrequency @default(DAILY)
+  discordNotifications Boolean         @default(false)
+  discordWebhookUrl    String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+enum DigestFrequency {
+  DAILY
+  WEEKLY
+  NONE
+}
+
+model NotificationLog {
+  id         String   @id @default(cuid())
+  userId     String
+  reminderId String
+  sentAt     DateTime @default(now())
+  type       String
+  subject    String?
+  success    Boolean  @default(true)
+  error      String?
+
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reminder Reminder @relation(fields: [reminderId], references: [id], onDelete: Cascade)
+}

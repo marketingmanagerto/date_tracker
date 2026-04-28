@@ -1,0 +1,242 @@
+"use client";
+
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
+import { format } from "date-fns";
+import { CalendarIcon, Loader2 } from "lucide-react";
+
+import { createReminderSchema, type CreateReminderInput } from "@/lib/validations";
+import type { Category } from "@prisma/client";
+import type { ReminderWithCategory } from "@/types";
+
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { cn } from "@/lib/utils";
+
+interface ReminderFormProps {
+  categories: Category[];
+  reminder?: ReminderWithCategory;
+  onSuccess?: () => void;
+}
+
+export function ReminderForm({ categories, reminder, onSuccess }: ReminderFormProps) {
+  const router = useRouter();
+  const [saving, setSaving] = useState(false);
+  const [dateOpen, setDateOpen] = useState(false);
+
+  const isEdit = !!reminder;
+
+  const { register, handleSubmit, setValue, watch, formState: { errors } } = useForm<CreateReminderInput>({
+    resolver: zodResolver(createReminderSchema),
+    defaultValues: {
+      title: reminder?.title || "",
+      categoryId: reminder?.categoryId || "",
+      date: reminder ? new Date(reminder.date) : new Date(),
+      isAllDay: reminder?.isAllDay ?? true,
+      recurrenceType: reminder?.recurrenceType || "NONE",
+      rruleString: reminder?.rruleString ?? "",
+      advanceDays: reminder?.advanceDays ?? 7,
+      priority: reminder?.priority || "MEDIUM",
+      notes: reminder?.notes || "",
+      status: reminder?.status || "ACTIVE",
+    },
+  });
+
+  const selectedDate = watch("date");
+  const recurrenceType = watch("recurrenceType");
+
+  async function onSubmit(data: CreateReminderInput) {
+    setSaving(true);
+    const url = isEdit ? `/api/reminders/${reminder.id}` : "/api/reminders";
+    const method = isEdit ? "PATCH" : "POST";
+
+    const res = await fetch(url, {
+      method,
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    });
+
+    setSaving(false);
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      toast.error(err.error?.message || "Something went wrong");
+      return;
+    }
+
+    toast.success(isEdit ? "Reminder updated!" : "Reminder created!");
+    if (onSuccess) {
+      onSuccess();
+    } else {
+      router.push("/reminders");
+      router.refresh();
+    }
+  }
+
+  return (
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+      <div className="space-y-1.5">
+        <Label htmlFor="title">Title *</Label>
+        <Input id="title" placeholder="e.g. Mom's Birthday, Car Insurance Renewal" {...register("title")} />
+        {errors.title && <p className="text-xs text-destructive">{errors.title.message}</p>}
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="space-y-1.5">
+          <Label>Category *</Label>
+          <Select
+            value={watch("categoryId") || undefined}
+            onValueChange={(v) => v && setValue("categoryId", v)}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Select category" />
+            </SelectTrigger>
+            <SelectContent>
+              {categories.map((cat) => (
+                <SelectItem key={cat.id} value={cat.id}>
+                  <span className="flex items-center gap-2">
+                    <span>{cat.icon}</span>
+                    <span>{cat.name}</span>
+                  </span>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {errors.categoryId && <p className="text-xs text-destructive">{errors.categoryId.message}</p>}
+        </div>
+
+        <div className="space-y-1.5">
+          <Label>Date *</Label>
+          <Popover open={dateOpen} onOpenChange={setDateOpen}>
+            <PopoverTrigger
+              className={cn("inline-flex h-8 items-center justify-start gap-1.5 rounded-lg border border-border bg-background px-2.5 text-sm font-normal w-full", !selectedDate && "text-muted-foreground")}
+            >
+              <CalendarIcon className="mr-2 h-4 w-4" />
+              {selectedDate ? format(new Date(selectedDate), "PPP") : "Pick a date"}
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="start">
+              <Calendar
+                mode="single"
+                selected={selectedDate ? new Date(selectedDate) : undefined}
+                onSelect={(d) => {
+                  if (d) { setValue("date", d); setDateOpen(false); }
+                }}
+                initialFocus
+              />
+            </PopoverContent>
+          </Popover>
+          {errors.date && <p className="text-xs text-destructive">{errors.date.message}</p>}
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="space-y-1.5">
+          <Label>Repeats</Label>
+          <Select
+            defaultValue={reminder?.recurrenceType || "NONE"}
+            onValueChange={(v) => setValue("recurrenceType", v as CreateReminderInput["recurrenceType"])}
+          >
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="NONE">One-time</SelectItem>
+              <SelectItem value="YEARLY">Every year</SelectItem>
+              <SelectItem value="MONTHLY">Every month</SelectItem>
+              <SelectItem value="WEEKLY">Every week</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="space-y-1.5">
+          <Label>Priority</Label>
+          <Select
+            defaultValue={reminder?.priority || "MEDIUM"}
+            onValueChange={(v) => setValue("priority", v as CreateReminderInput["priority"])}
+          >
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="LOW">Low</SelectItem>
+              <SelectItem value="MEDIUM">Medium</SelectItem>
+              <SelectItem value="HIGH">High</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="space-y-1.5">
+          <Label htmlFor="advanceDays">Remind me (days before)</Label>
+          <Input
+            id="advanceDays"
+            type="number"
+            min={0}
+            max={365}
+            {...register("advanceDays")}
+          />
+          {errors.advanceDays && <p className="text-xs text-destructive">{errors.advanceDays.message}</p>}
+        </div>
+      </div>
+
+      {recurrenceType === "CUSTOM" && (
+        <div className="space-y-1.5">
+          <Label htmlFor="rruleString">RRule string</Label>
+          <Input
+            id="rruleString"
+            placeholder="e.g. FREQ=YEARLY;BYMONTH=6;BYMONTHDAY=15"
+            {...register("rruleString")}
+          />
+          <p className="text-xs text-muted-foreground">
+            Enter an RFC 5545 RRULE string for complex recurrence patterns.
+          </p>
+        </div>
+      )}
+
+      <div className="space-y-1.5">
+        <Label htmlFor="notes">Notes</Label>
+        <Textarea
+          id="notes"
+          placeholder="Any extra details..."
+          rows={3}
+          {...register("notes")}
+        />
+      </div>
+
+      {isEdit && (
+        <div className="space-y-1.5">
+          <Label>Status</Label>
+          <Select
+            defaultValue={reminder.status}
+            onValueChange={(v) => setValue("status", v as CreateReminderInput["status"])}
+          >
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="ACTIVE">Active</SelectItem>
+              <SelectItem value="SNOOZED">Snoozed</SelectItem>
+              <SelectItem value="ARCHIVED">Archived</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      )}
+
+      <div className="flex gap-3 pt-2">
+        <Button type="submit" disabled={saving} className="bg-indigo-600 hover:bg-indigo-700">
+          {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+          {isEdit ? "Save changes" : "Create reminder"}
+        </Button>
+        <Button type="button" variant="outline" onClick={() => router.back()}>
+          Cancel
+        </Button>
+      </div>
+    </form>
+  );
+}
