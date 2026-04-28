@@ -27,16 +27,16 @@ export function ReminderRow({ reminder }: ReminderRowProps) {
             <span className="text-muted-foreground">·</span>
             <span className="text-xs text-muted-foreground">{formatDateShort(reminder.date)}</span>
             {recurrence !== "One-time" && (
-              <>
+              <span className="hidden sm:contents">
                 <span className="text-muted-foreground">·</span>
                 <RefreshCw className="h-3 w-3 text-muted-foreground" />
                 <span className="text-xs text-muted-foreground">{recurrence}</span>
-              </>
+              </span>
             )}
           </div>
         </div>
         <div className="flex items-center gap-2 shrink-0">
-          <Badge variant="secondary" className={`text-xs ${priority.class}`}>{priority.label}</Badge>
+          <Badge variant="secondary" className={`hidden sm:inline-flex text-xs ${priority.class}`}>{priority.label}</Badge>
           <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${urgency.pillClass}`}>
             {urgency.label}
           </span>

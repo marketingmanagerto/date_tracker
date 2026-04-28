@@ -52,8 +52,8 @@ export default async function DashboardPage() {
             <p className="text-sm text-muted-foreground">Here&apos;s what&apos;s on your radar</p>
           </div>
           <ButtonLink href="/reminders/new" size="sm" className="bg-indigo-600 hover:bg-indigo-700">
-            <Plus className="mr-2 h-4 w-4" />
-            Add reminder
+            <Plus className="h-4 w-4 sm:mr-2" />
+            <span className="hidden sm:inline">Add reminder</span>
           </ButtonLink>
         </div>
 

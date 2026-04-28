@@ -29,8 +29,8 @@ export default async function RemindersPage() {
         <div className="flex items-center justify-between">
           <p className="text-sm text-muted-foreground">{reminders.length} total reminder{reminders.length !== 1 ? "s" : ""}</p>
           <ButtonLink href="/reminders/new" size="sm" className="bg-indigo-600 hover:bg-indigo-700">
-            <Plus className="mr-2 h-4 w-4" />
-            Add reminder
+            <Plus className="h-4 w-4 sm:mr-2" />
+            <span className="hidden sm:inline">Add reminder</span>
           </ButtonLink>
         </div>
         <RemindersClient reminders={reminders} categories={categories} />

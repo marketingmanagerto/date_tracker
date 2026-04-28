@@ -156,7 +156,7 @@ export function SettingsClient({ settings, categories, user }: SettingsClientPro
               <div className="space-y-1.5 pl-1">
                 <Label>Email digest frequency</Label>
                 <Select value={frequency} onValueChange={(v) => setFrequency(v as typeof frequency)}>
-                  <SelectTrigger className="w-48">
+                  <SelectTrigger className="w-full sm:w-48">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -270,7 +270,7 @@ export function SettingsClient({ settings, categories, user }: SettingsClientPro
           <div className="space-y-1.5">
             <Label>Default recurrence</Label>
             <Select value={newCatRecurrence} onValueChange={setNewCatRecurrence}>
-              <SelectTrigger className="w-48">
+              <SelectTrigger className="w-full sm:w-48">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>

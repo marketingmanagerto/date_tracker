@@ -63,7 +63,7 @@ export function CalendarView({ reminders }: CalendarViewProps) {
           return (
             <div
               key={i}
-              className={`min-h-[80px] p-1.5 border-b border-r last:border-r-0 ${
+              className={`min-h-[60px] sm:min-h-[80px] p-1 sm:p-1.5 border-b border-r last:border-r-0 ${
                 !inMonth ? "bg-muted/30" : ""
               } ${i % 7 === 0 ? "border-l-0" : ""}`}
             >
@@ -82,10 +82,11 @@ export function CalendarView({ reminders }: CalendarViewProps) {
                   {dayReminders.slice(0, 3).map((r) => (
                     <Popover key={r.id}>
                       <PopoverTrigger
-                        className="w-full text-left text-xs px-1.5 py-0.5 rounded truncate hover:opacity-80"
+                        className="w-full text-left text-xs px-1.5 py-0.5 rounded truncate hover:opacity-80 flex items-center gap-1"
                         style={{ backgroundColor: `${r.category.color}22`, color: r.category.color }}
                       >
-                        {r.category.icon} {r.title}
+                        <span className="h-1.5 w-1.5 rounded-full shrink-0" style={{ backgroundColor: r.category.color }} />
+                        <span className="truncate">{r.title}</span>
                       </PopoverTrigger>
                       <PopoverContent className="w-64 p-3" align="start">
                         <div className="flex items-start gap-2">

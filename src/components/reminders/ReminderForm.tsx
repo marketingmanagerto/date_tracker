@@ -198,7 +198,7 @@ export function ReminderForm({ categories, reminder, onSuccess }: ReminderFormPr
             defaultValue={reminder.status}
             onValueChange={(v) => setValue("status", v as CreateReminderInput["status"])}
           >
-            <SelectTrigger className="w-40">
+            <SelectTrigger className="w-full sm:w-40">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
