@@ -1,6 +1,7 @@
-import type { Category, Reminder, RecurrenceType, Priority, ReminderStatus, DigestFrequency } from "@prisma/client";
+import type { Category, Reminder, Expense, RecurrenceType, Priority, ReminderStatus, DigestFrequency, ExpenseType, ExpenseFrequency, ExpenseStatus } from "@prisma/client";
 
-export type { RecurrenceType, Priority, ReminderStatus, DigestFrequency };
+export type { RecurrenceType, Priority, ReminderStatus, DigestFrequency, ExpenseType, ExpenseFrequency, ExpenseStatus };
+export type { Expense };
 
 export type ReminderWithCategory = Reminder & {
   category: Category;
@@ -20,4 +21,9 @@ export interface UrgencyInfo {
 export interface UpcomingGroup {
   label: string;
   reminders: ReminderWithCategory[];
+}
+
+export interface ExpenseSummary {
+  totalMonthlyPersonal: number;
+  totalMonthlyBusiness: number;
 }

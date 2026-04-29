@@ -6,6 +6,7 @@ import { StatsRow } from "@/components/dashboard/StatsRow";
 import { TodayCard } from "@/components/dashboard/TodayCard";
 import { UpcomingList } from "@/components/dashboard/UpcomingList";
 import { OverdueList } from "@/components/dashboard/OverdueList";
+import { UpcomingBills } from "@/components/dashboard/UpcomingBills";
 import { ButtonLink } from "@/components/ui/button-link";
 import { Plus } from "lucide-react";
 import { startOfMonth, endOfMonth } from "date-fns";
@@ -16,7 +17,7 @@ export default async function DashboardPage() {
   const session = await requireAuth();
   const userId = session.user.id;
 
-  const [today, upcoming, overdue, totalActive, monthCount] = await Promise.all([
+  const [today, upcoming, overdue, totalActive, monthCount, expenses] = await Promise.all([
     getTodayReminders(userId),
     getUpcomingReminders(userId, 30),
     getOverdueReminders(userId),
@@ -28,6 +29,7 @@ export default async function DashboardPage() {
         date: { gte: startOfMonth(new Date()), lte: endOfMonth(new Date()) },
       },
     }),
+    prisma.expense.findMany({ where: { userId } }),
   ]);
 
   const groups = groupUpcoming(upcoming.filter((r) => {
@@ -68,6 +70,7 @@ export default async function DashboardPage() {
           <div className="lg:col-span-2 space-y-6">
             <TodayCard reminders={today} />
             <UpcomingList groups={groups} />
+            <UpcomingBills expenses={expenses} />
           </div>
           {overdue.length > 0 && (
             <div>

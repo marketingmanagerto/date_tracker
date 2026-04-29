@@ -25,6 +25,7 @@ model User {
   categories       Category[]
   settings         UserSettings?
   notificationLogs NotificationLog[]
+  expenses         Expense[]
 }
 
 model Account {
@@ -147,6 +148,47 @@ enum DigestFrequency {
   DAILY
   WEEKLY
   NONE
+}
+
+// ---- Expenses ----
+
+enum ExpenseType {
+  PERSONAL
+  BUSINESS
+}
+
+enum ExpenseFrequency {
+  DAILY
+  WEEKLY
+  MONTHLY
+  QUARTERLY
+  YEARLY
+  ONE_TIME
+}
+
+enum ExpenseStatus {
+  ACTIVE
+  PAUSED
+  CANCELLED
+}
+
+model Expense {
+  id          String           @id @default(cuid())
+  userId      String
+  user        User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name        String
+  amount      Decimal          @db.Decimal(10, 2)
+  type        ExpenseType      @default(PERSONAL)
+  card        String           // e.g. "Visa 4242", "Amex Gold", "Bank Transfer"
+  frequency   ExpenseFrequency @default(MONTHLY)
+  nextDueDate DateTime
+  category    String           // free-text: "Software", "Utilities", "Streaming", etc.
+  notes       String?
+  status      ExpenseStatus    @default(ACTIVE)
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  @@index([userId])
 }
 
 model NotificationLog {

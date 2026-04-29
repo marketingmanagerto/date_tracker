@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Bell, LayoutDashboard, List, Calendar, Settings, LogOut, Menu, X } from "lucide-react";
+import { Bell, LayoutDashboard, List, Calendar, Settings, LogOut, Menu, X, Receipt } from "lucide-react";
 import { signOut } from "next-auth/react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -12,6 +12,7 @@ const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/reminders", label: "Reminders", icon: List },
   { href: "/calendar", label: "Calendar", icon: Calendar },
+  { href: "/expenses", label: "Expenses", icon: Receipt },
   { href: "/settings", label: "Settings", icon: Settings },
 ];
 

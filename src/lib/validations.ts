@@ -42,6 +42,20 @@ export const registerSchema = z.object({
   password: z.string().min(8, "Password must be at least 8 characters"),
 });
 
+export const createExpenseSchema = z.object({
+  name: z.string().min(1, "Name is required").max(200),
+  amount: z.coerce.number().positive("Amount must be positive").multipleOf(0.01),
+  type: z.enum(["PERSONAL", "BUSINESS"]).default("PERSONAL"),
+  card: z.string().min(1, "Card / payment method is required").max(100),
+  frequency: z.enum(["DAILY", "WEEKLY", "MONTHLY", "QUARTERLY", "YEARLY", "ONE_TIME"]).default("MONTHLY"),
+  nextDueDate: z.coerce.date({ required_error: "Due date is required" }),
+  category: z.string().min(1, "Category is required").max(100),
+  notes: z.string().max(5000).optional(),
+  status: z.enum(["ACTIVE", "PAUSED", "CANCELLED"]).default("ACTIVE"),
+});
+
+export const updateExpenseSchema = createExpenseSchema.partial();
+
 export const loginSchema = z.object({
   email: z.string().email("Invalid email address"),
   password: z.string().min(1, "Password is required"),
@@ -54,3 +68,5 @@ export type UpdateCategoryInput = z.infer<typeof updateCategorySchema>;
 export type UpdateSettingsInput = z.infer<typeof updateSettingsSchema>;
 export type RegisterInput = z.infer<typeof registerSchema>;
 export type LoginInput = z.infer<typeof loginSchema>;
+export type CreateExpenseInput = z.infer<typeof createExpenseSchema>;
+export type UpdateExpenseInput = z.infer<typeof updateExpenseSchema>;
