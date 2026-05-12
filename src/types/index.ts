@@ -5,6 +5,7 @@ export type { Expense };
 
 export type ReminderWithCategory = Reminder & {
   category: Category;
+  notificationLogs?: { sentAt: Date; type: string }[];
 };
 
 export type CategoryWithCount = Category & {

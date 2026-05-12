@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { computeNextFireAt } from "@/lib/recurring-helpers";
+import { computeNextFireAt, intervalLabel } from "@/lib/recurring-helpers";
+import { completeUrl } from "@/lib/action-tokens";
 
 export async function GET(req: NextRequest) {
   return POST(req);
@@ -91,12 +92,24 @@ export async function POST(req: NextRequest) {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               username: "Remind Me",
-              content: `🔔 **Recurring Reminder:** ${task.title}${task.notes ? `\n> ${task.notes}` : ""}`,
+              content: `🔔 **Recurring Reminder:** ${task.title}`,
               embeds: [{
-                title: task.title,
-                description: task.notes || undefined,
+                title: `🔁 ${task.title}`,
+                description: task.notes ? `> ${task.notes}` : undefined,
                 color: 0x4f46e5,
+                fields: [
+                  { name: "Interval", value: intervalLabel(task.interval, task.intervalValue), inline: true },
+                  { name: "Next fire", value: `<t:${Math.floor(computeNextFireAt(now, task.interval, task.intervalValue).getTime() / 1000)}:R>`, inline: true },
+                ],
                 footer: { text: "Remind Me — Recurring reminder" },
+                timestamp: now.toISOString(),
+              }],
+              components: [{
+                type: 1,
+                components: [
+                  { type: 2, style: 5, label: "✅ Mark Complete", url: completeUrl(task.id, "recurring") },
+                  { type: 2, style: 5, label: "Manage", url: `${appUrl}/recurring` },
+                ],
               }],
             }),
           });

@@ -78,6 +78,7 @@ export async function POST(req: NextRequest) {
   // --- Discord ---
   if (settings?.discordNotifications && settings.discordWebhookUrl) {
     try {
+      const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
       const res = await fetch(settings.discordWebhookUrl, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -88,7 +89,18 @@ export async function POST(req: NextRequest) {
             title: `🔔 ${title}`,
             description: notes || undefined,
             color: 0x4f46e5,
-            footer: { text: "Remind Me — test notification · notifications are working ✓" },
+            fields: [
+              { name: "Status", value: "✅ Your Discord notifications are working!", inline: false },
+            ],
+            footer: { text: "Remind Me — test notification" },
+            timestamp: new Date().toISOString(),
+          }],
+          components: [{
+            type: 1,
+            components: [
+              { type: 2, style: 5, label: "📊 Dashboard", url: `${appUrl}/dashboard` },
+              { type: 2, style: 5, label: "⚙️ Settings", url: `${appUrl}/settings` },
+            ],
           }],
         }),
       });

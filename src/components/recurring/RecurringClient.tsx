@@ -56,10 +56,16 @@ function TaskRow({ task, onEdit, onDelete, onToggle }: {
         </div>
         <div className="flex items-center gap-3 mt-0.5 flex-wrap">
           <NextFireBadge nextFireAt={new Date(task.nextFireAt)} status={task.status} />
-          {task.lastFiredAt && (
-            <span className="text-xs text-muted-foreground">
-              Last: {formatDistanceToNow(new Date(task.lastFiredAt), { addSuffix: true })}
+          {task.lastFiredAt ? (
+            <span
+              className="text-xs text-indigo-500 dark:text-indigo-400 flex items-center gap-1"
+              title={`Last ran: ${new Date(task.lastFiredAt).toLocaleString()}`}
+            >
+              <span className="h-1.5 w-1.5 rounded-full bg-indigo-400 dark:bg-indigo-500 animate-pulse" />
+              Last ran {formatDistanceToNow(new Date(task.lastFiredAt), { addSuffix: true })}
             </span>
+          ) : (
+            <span className="text-xs text-muted-foreground">Never ran yet</span>
           )}
           {/* Notification channel indicators */}
           <span className="flex items-center gap-1.5">

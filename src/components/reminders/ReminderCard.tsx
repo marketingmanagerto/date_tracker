@@ -4,7 +4,8 @@ import { Badge } from "@/components/ui/badge";
 import { urgencyStyle, priorityStyle, formatDateShort } from "@/lib/utils";
 import { daysUntilNext, recurrenceLabel } from "@/lib/rrule-helpers";
 import type { ReminderWithCategory } from "@/types";
-import { RefreshCw } from "lucide-react";
+import { RefreshCw, BellRing } from "lucide-react";
+import { formatDistanceToNow } from "date-fns";
 
 interface ReminderCardProps {
   reminder: ReminderWithCategory;
@@ -15,6 +16,7 @@ export function ReminderCard({ reminder }: ReminderCardProps) {
   const urgency = urgencyStyle(days);
   const priority = priorityStyle(reminder.priority);
   const recurrence = recurrenceLabel(reminder.recurrenceType, reminder.rruleString);
+  const lastNotified = reminder.notificationLogs?.[0];
 
   return (
     <Link href={`/reminders/${reminder.id}`}>
@@ -42,6 +44,14 @@ export function ReminderCard({ reminder }: ReminderCardProps) {
             </Badge>
           </div>
         </div>
+        {lastNotified && (
+          <div className="flex items-center gap-1 -mt-1" title={`Last notified via ${lastNotified.type} on ${new Date(lastNotified.sentAt).toLocaleString()}`}>
+            <BellRing className="h-3 w-3 text-indigo-400" />
+            <span className="text-xs text-indigo-500 dark:text-indigo-400">
+              Notified {formatDistanceToNow(new Date(lastNotified.sentAt), { addSuffix: true })}
+            </span>
+          </div>
+        )}
       </div>
     </Link>
   );

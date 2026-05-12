@@ -4,7 +4,8 @@ import { Badge } from "@/components/ui/badge";
 import { urgencyStyle, priorityStyle, formatDateShort } from "@/lib/utils";
 import { daysUntilNext, recurrenceLabel } from "@/lib/rrule-helpers";
 import type { ReminderWithCategory } from "@/types";
-import { RefreshCw, ChevronRight } from "lucide-react";
+import { RefreshCw, ChevronRight, BellRing } from "lucide-react";
+import { formatDistanceToNow } from "date-fns";
 
 interface ReminderRowProps {
   reminder: ReminderWithCategory;
@@ -15,6 +16,7 @@ export function ReminderRow({ reminder }: ReminderRowProps) {
   const urgency = urgencyStyle(days);
   const priority = priorityStyle(reminder.priority);
   const recurrence = recurrenceLabel(reminder.recurrenceType, reminder.rruleString);
+  const lastNotified = reminder.notificationLogs?.[0];
 
   return (
     <Link href={`/reminders/${reminder.id}`}>
@@ -31,6 +33,15 @@ export function ReminderRow({ reminder }: ReminderRowProps) {
                 <span className="text-muted-foreground">·</span>
                 <RefreshCw className="h-3 w-3 text-muted-foreground" />
                 <span className="text-xs text-muted-foreground">{recurrence}</span>
+              </span>
+            )}
+            {lastNotified && (
+              <span className="hidden sm:contents">
+                <span className="text-muted-foreground">·</span>
+                <BellRing className="h-3 w-3 text-indigo-400" />
+                <span className="text-xs text-indigo-500 dark:text-indigo-400" title={`Last notified via ${lastNotified.type} on ${new Date(lastNotified.sentAt).toLocaleString()}`}>
+                  {formatDistanceToNow(new Date(lastNotified.sentAt), { addSuffix: true })}
+                </span>
               </span>
             )}
           </div>

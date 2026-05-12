@@ -13,7 +13,15 @@ export default async function RemindersPage() {
   const [reminders, categories] = await Promise.all([
     prisma.reminder.findMany({
       where: { userId: session.user.id },
-      include: { category: true },
+      include: {
+        category: true,
+        notificationLogs: {
+          where: { success: true },
+          orderBy: { sentAt: "desc" },
+          take: 1,
+          select: { sentAt: true, type: true },
+        },
+      },
       orderBy: { date: "asc" },
     }),
     prisma.category.findMany({

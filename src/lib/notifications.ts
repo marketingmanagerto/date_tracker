@@ -1,6 +1,7 @@
 import type { ReminderWithCategory } from "@/types";
 import { daysUntilNext } from "./rrule-helpers";
 import { formatDateShort } from "./utils";
+import { completeUrl } from "./action-tokens";
 
 function getResend() {
   const { Resend } = require("resend") as typeof import("resend");
@@ -105,37 +106,57 @@ export async function sendDiscordNotification(
     return "🟢";
   };
 
-  const embeds = [];
+  const urgencyColor = (days: number | null) => {
+    if (days === null || days < 0) return 0xdc2626;
+    if (days === 0) return 0xdc2626;
+    if (days <= 3) return 0xf97316;
+    if (days <= 7) return 0xf59e0b;
+    return 0x4f46e5;
+  };
 
-  if (overdueReminders.length > 0) {
+  // Build one embed + action row per reminder (max 10 embeds per message)
+  const allReminders = [...overdueReminders, ...dueReminders];
+  const embeds: object[] = [];
+  const components: object[] = [];
+
+  for (const r of allReminders.slice(0, 10)) {
+    const days = daysUntilNext(r);
+    const isOverdue = days !== null && days < 0;
+    const label = days === null
+      ? "Unknown"
+      : days === 0 ? "📌 Today!"
+      : isOverdue ? `⚠️ ${Math.abs(days)}d overdue`
+      : days === 1 ? "Tomorrow" : `In ${days} days`;
+
     embeds.push({
-      title: `⚠️ Needs Attention (${overdueReminders.length})`,
-      color: 0xdc2626, // red
-      fields: overdueReminders.map((r) => {
-        const days = daysUntilNext(r);
-        const ago = days !== null ? `${Math.abs(days)}d ago` : "overdue";
-        return {
-          name: `${r.category.icon} ${r.title}`,
-          value: `${r.category.name} · ${formatDateShort(r.date)} · **${ago}**`,
-          inline: false,
-        };
-      }),
+      title: `${urgencyEmoji(days)} ${r.title}`,
+      description: `**${r.category.name}** · ${formatDateShort(r.date)} · ${label}${r.notes ? `\n> ${r.notes.slice(0, 120)}` : ""}`,
+      color: urgencyColor(days),
+      footer: { text: `ID: ${r.id.slice(-6)}` },
     });
   }
 
-  if (dueReminders.length > 0) {
-    embeds.push({
-      title: `📅 Upcoming (${dueReminders.length})`,
-      color: 0x4f46e5, // indigo
-      fields: dueReminders.map((r) => {
-        const days = daysUntilNext(r);
-        const label = days === 0 ? "Today!" : days === 1 ? "Tomorrow" : `In ${days} days`;
-        return {
-          name: `${urgencyEmoji(days)} ${r.category.icon} ${r.title}`,
-          value: `${r.category.name} · ${formatDateShort(r.date)} · **${label}**`,
-          inline: false,
-        };
-      }),
+  // Action row: one "✅ Mark Complete" per reminder (max 5 buttons per row)
+  // Split into rows of 5 buttons, first items get complete buttons
+  const actionReminders = allReminders.slice(0, 4); // leave room for dashboard btn
+  if (actionReminders.length > 0) {
+    const btns = actionReminders.map((r) => ({
+      type: 2,
+      style: 5, // link
+      label: `✅ ${r.title.length > 20 ? r.title.slice(0, 18) + "…" : r.title}`,
+      url: completeUrl(r.id, "reminder"),
+    }));
+    btns.push({
+      type: 2,
+      style: 5,
+      label: "📊 Dashboard",
+      url: `${appUrl}/dashboard`,
+    });
+    components.push({ type: 1, components: btns });
+  } else {
+    components.push({
+      type: 1,
+      components: [{ type: 2, style: 5, label: "📊 Dashboard", url: `${appUrl}/dashboard` }],
     });
   }
 
@@ -146,19 +167,7 @@ export async function sendDiscordNotification(
       ? `🔔 You have **${overdueReminders.length}** overdue and **${dueReminders.length}** upcoming reminders.`
       : `🔔 You have **${dueReminders.length}** upcoming reminder${dueReminders.length === 1 ? "" : "s"}.`,
     embeds,
-    components: [
-      {
-        type: 1,
-        components: [
-          {
-            type: 2,
-            style: 5,
-            label: "View Dashboard",
-            url: `${appUrl}/dashboard`,
-          },
-        ],
-      },
-    ],
+    components,
   };
 
   const res = await fetch(webhookUrl, {
