@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { formatDistanceToNow, formatDistanceStrict } from "date-fns";
+import { formatDistanceToNow, format } from "date-fns";
 import type { RecurringTask } from "@prisma/client";
 import { intervalLabel } from "@/lib/recurring-helpers";
 import { RecurringForm } from "./RecurringForm";
@@ -26,7 +26,7 @@ function NextFireBadge({ nextFireAt, status }: { nextFireAt: Date; status: strin
   const isPast = new Date(nextFireAt) < new Date();
   return (
     <span className={`text-xs font-medium ${isPast ? "text-orange-600 dark:text-orange-400" : "text-muted-foreground"}`}>
-      {isPast ? "Pending (next cron)" : `Fires ${dist}`}
+      {isPast ? `Pending · was due ${format(new Date(nextFireAt), "MMM d, h:mm a")}` : `Fires ${dist}`}
     </span>
   );
 }
