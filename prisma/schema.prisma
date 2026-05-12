@@ -26,6 +26,7 @@ model User {
   settings         UserSettings?
   notificationLogs NotificationLog[]
   expenses         Expense[]
+  recurringTasks   RecurringTask[]
 }
 
 model Account {
@@ -148,6 +149,41 @@ enum DigestFrequency {
   DAILY
   WEEKLY
   NONE
+}
+
+// ---- Recurring Tasks ----
+
+enum RecurringInterval {
+  HOURLY
+  DAILY
+  WEEKLY
+  MONTHLY
+  YEARLY
+}
+
+enum RecurringStatus {
+  ACTIVE
+  PAUSED
+}
+
+model RecurringTask {
+  id             String            @id @default(cuid())
+  userId         String
+  user           User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title          String
+  notes          String?
+  interval       RecurringInterval @default(DAILY)
+  intervalValue  Int               @default(1) // every N intervals
+  nextFireAt     DateTime          // maintained by cron
+  lastFiredAt    DateTime?
+  notifyEmail    Boolean           @default(true)
+  notifyDiscord  Boolean           @default(false)
+  status         RecurringStatus   @default(ACTIVE)
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+
+  @@index([userId])
+  @@index([nextFireAt, status])
 }
 
 // ---- Expenses ----

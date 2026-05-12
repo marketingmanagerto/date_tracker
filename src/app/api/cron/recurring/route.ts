@@ -1,0 +1,124 @@
+import { NextRequest, NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
+import { computeNextFireAt } from "@/lib/recurring-helpers";
+
+export async function GET(req: NextRequest) {
+  return POST(req);
+}
+
+export async function POST(req: NextRequest) {
+  const cronSecret = req.headers.get("authorization");
+  if (
+    process.env.NODE_ENV === "production" &&
+    cronSecret !== `Bearer ${process.env.CRON_SECRET}`
+  ) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const now = new Date();
+
+  // Find all active tasks that are due
+  const dueTasks = await prisma.recurringTask.findMany({
+    where: {
+      status: "ACTIVE",
+      nextFireAt: { lte: now },
+    },
+    include: {
+      user: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          settings: {
+            select: {
+              discordNotifications: true,
+              discordWebhookUrl: true,
+            },
+          },
+        },
+      },
+    },
+  });
+
+  let fired = 0;
+  const errors: string[] = [];
+
+  for (const task of dueTasks) {
+    try {
+      const { user } = task;
+      const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+
+      // Send email
+      if (task.notifyEmail && user.email) {
+        try {
+          const { Resend } = require("resend") as typeof import("resend");
+          const resend = new Resend(process.env.RESEND_API_KEY);
+
+          await resend.emails.send({
+            from: process.env.RESEND_FROM_EMAIL || "reminders@example.com",
+            to: user.email,
+            subject: `🔔 Reminder: ${task.title}`,
+            html: `
+<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:0;background:#f9fafb;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
+  <div style="max-width:500px;margin:40px auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.1);">
+    <div style="background:linear-gradient(135deg,#4f46e5,#7c3aed);padding:28px 36px;color:#fff;">
+      <div style="font-size:24px;margin-bottom:4px;">🔔 Recurring Reminder</div>
+    </div>
+    <div style="padding:28px 36px;">
+      <h2 style="margin:0 0 8px;color:#111827;font-size:20px;">${task.title}</h2>
+      ${task.notes ? `<p style="color:#6b7280;font-size:14px;margin:0 0 20px;">${task.notes}</p>` : ""}
+      <div style="text-align:center;margin-top:24px;">
+        <a href="${appUrl}/recurring" style="background:#4f46e5;color:#fff;padding:10px 24px;border-radius:8px;text-decoration:none;font-weight:600;display:inline-block;">Manage reminders</a>
+      </div>
+    </div>
+  </div>
+</body>
+</html>`,
+          });
+        } catch (err) {
+          errors.push(`email:${user.email}: ${err}`);
+        }
+      }
+
+      // Send Discord
+      if (task.notifyDiscord && user.settings?.discordNotifications && user.settings.discordWebhookUrl) {
+        try {
+          await fetch(user.settings.discordWebhookUrl, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              username: "Remind Me",
+              content: `🔔 **Recurring Reminder:** ${task.title}${task.notes ? `\n> ${task.notes}` : ""}`,
+              embeds: [{
+                title: task.title,
+                description: task.notes || undefined,
+                color: 0x4f46e5,
+                footer: { text: "Remind Me — Recurring reminder" },
+              }],
+            }),
+          });
+        } catch (err) {
+          errors.push(`discord:${user.id}: ${err}`);
+        }
+      }
+
+      // Advance nextFireAt and record lastFiredAt
+      await prisma.recurringTask.update({
+        where: { id: task.id },
+        data: {
+          lastFiredAt: now,
+          nextFireAt:  computeNextFireAt(now, task.interval, task.intervalValue),
+        },
+      });
+
+      fired++;
+    } catch (err) {
+      errors.push(`task:${task.id}: ${err}`);
+    }
+  }
+
+  return NextResponse.json({ fired, total: dueTasks.length, errors });
+}

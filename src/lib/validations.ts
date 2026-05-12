@@ -42,6 +42,22 @@ export const registerSchema = z.object({
   password: z.string().min(8, "Password must be at least 8 characters"),
 });
 
+export const createRecurringTaskSchema = z.object({
+  title:         z.string().min(1, "Title is required").max(200),
+  notes:         z.string().max(5000).optional(),
+  interval:      z.enum(["HOURLY", "DAILY", "WEEKLY", "MONTHLY", "YEARLY"]).default("DAILY"),
+  intervalValue: z.coerce.number().int().min(1).max(99).default(1),
+  notifyEmail:   z.boolean().default(true),
+  notifyDiscord: z.boolean().default(false),
+});
+
+export const updateRecurringTaskSchema = createRecurringTaskSchema.partial().extend({
+  status: z.enum(["ACTIVE", "PAUSED"]).optional(),
+});
+
+export type CreateRecurringTaskInput = z.infer<typeof createRecurringTaskSchema>;
+export type UpdateRecurringTaskInput = z.infer<typeof updateRecurringTaskSchema>;
+
 export const createExpenseSchema = z.object({
   name: z.string().min(1, "Name is required").max(200),
   amount: z.coerce.number().positive("Amount must be positive").multipleOf(0.01),
