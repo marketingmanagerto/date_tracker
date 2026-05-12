@@ -26,8 +26,8 @@ export async function POST(req: NextRequest) {
 
   const { interval, intervalValue, ...rest } = parsed.data;
 
-  // First fire = now (will fire at next cron run)
-  const nextFireAt = computeNextFireAt(new Date(), interval, intervalValue);
+  // First fire = now — will trigger at the very next cron run
+  const nextFireAt = new Date();
 
   const task = await prisma.recurringTask.create({
     data: {

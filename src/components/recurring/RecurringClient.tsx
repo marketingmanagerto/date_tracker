@@ -13,7 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import {
   Plus, Pencil, Trash2, Pause, Play,
-  Timer, Mail, MessageSquare, AlarmClock,
+  Timer, Mail, MessageSquare, AlarmClock, Zap, Loader2,
 } from "lucide-react";
 
 interface Props {
@@ -110,6 +110,7 @@ export function RecurringClient({ tasks: initialTasks }: Props) {
   const [tasks, setTasks] = useState<RecurringTask[]>(initialTasks);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<RecurringTask | null>(null);
+  const [triggering, setTriggering] = useState(false);
 
   async function handleDelete(id: string) {
     const res = await fetch(`/api/recurring/${id}`, { method: "DELETE" });
@@ -135,6 +136,26 @@ export function RecurringClient({ tasks: initialTasks }: Props) {
     } else {
       toast.error("Failed to update");
     }
+  }
+
+  async function handleTrigger() {
+    setTriggering(true);
+    try {
+      const res = await fetch("/api/recurring/trigger", { method: "POST" });
+      const data = await res.json();
+      if (data.fired > 0) {
+        toast.success(`Fired ${data.fired} pending reminder${data.fired > 1 ? "s" : ""}! Check your email/Discord.`);
+        // Refresh task list to show updated lastFiredAt / nextFireAt
+        const fresh = await fetch("/api/recurring").then((r) => r.json());
+        setTasks(fresh);
+        router.refresh();
+      } else {
+        toast.info("No pending reminders to fire right now.");
+      }
+    } catch {
+      toast.error("Failed to trigger");
+    }
+    setTriggering(false);
   }
 
   function handleSuccess() {
@@ -164,8 +185,18 @@ export function RecurringClient({ tasks: initialTasks }: Props) {
         )}
       </div>
 
-      {/* Add button */}
-      <div className="flex justify-end">
+      {/* Toolbar */}
+      <div className="flex justify-end gap-2">
+        <Button
+          size="sm"
+          variant="outline"
+          disabled={triggering}
+          onClick={handleTrigger}
+          className="text-amber-600 border-amber-200 hover:bg-amber-50 dark:text-amber-400 dark:border-amber-800 dark:hover:bg-amber-950/30"
+        >
+          {triggering ? <Loader2 className="h-4 w-4 animate-spin sm:mr-2" /> : <Zap className="h-4 w-4 sm:mr-2" />}
+          <span className="hidden sm:inline">Trigger pending</span>
+        </Button>
         <Button
           size="sm"
           className="bg-indigo-600 hover:bg-indigo-700"
