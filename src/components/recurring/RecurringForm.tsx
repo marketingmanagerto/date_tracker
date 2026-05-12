@@ -3,11 +3,12 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Loader2 } from "lucide-react";
+import { Loader2, BellRing } from "lucide-react";
 import { toast } from "sonner";
 
 import { createRecurringTaskSchema, type CreateRecurringTaskInput } from "@/lib/validations";
 import type { RecurringTask } from "@prisma/client";
+import { useTestNotification } from "@/hooks/useTestNotification";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -32,6 +33,7 @@ const INTERVALS = [
 export function RecurringForm({ task, onSuccess, onCancel }: RecurringFormProps) {
   const [saving, setSaving] = useState(false);
   const isEdit = !!task;
+  const { sendTest, testing } = useTestNotification();
 
   const { register, handleSubmit, setValue, watch, formState: { errors } } = useForm<CreateRecurringTaskInput>({
     resolver: zodResolver(createRecurringTaskSchema),
@@ -132,12 +134,22 @@ export function RecurringForm({ task, onSuccess, onCancel }: RecurringFormProps)
         </div>
       </div>
 
-      <div className="flex gap-3 pt-1">
+      <div className="flex flex-wrap gap-3 pt-1">
         <Button type="submit" disabled={saving} className="bg-indigo-600 hover:bg-indigo-700">
           {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
           {isEdit ? "Save changes" : "Create reminder"}
         </Button>
         <Button type="button" variant="outline" onClick={onCancel}>Cancel</Button>
+        <Button
+          type="button"
+          variant="outline"
+          disabled={testing}
+          onClick={() => sendTest(watch("title"), watch("notes") ?? undefined)}
+          className="ml-auto text-indigo-600 border-indigo-200 hover:bg-indigo-50 dark:text-indigo-400 dark:border-indigo-800 dark:hover:bg-indigo-950/30"
+        >
+          {testing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <BellRing className="mr-2 h-4 w-4" />}
+          Test notification
+        </Button>
       </div>
     </form>
   );

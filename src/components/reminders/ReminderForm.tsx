@@ -6,12 +6,13 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { format } from "date-fns";
-import { CalendarIcon, Loader2 } from "lucide-react";
+import { CalendarIcon, Loader2, BellRing } from "lucide-react";
 
 import { createReminderSchema, type CreateReminderInput } from "@/lib/validations";
 import type { Category } from "@prisma/client";
 import type { ReminderWithCategory } from "@/types";
 import { ICON_MAP } from "@/components/reminders/CategoryIcon";
+import { useTestNotification } from "@/hooks/useTestNotification";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -43,6 +44,7 @@ export function ReminderForm({ categories, reminder, onSuccess }: ReminderFormPr
   const router = useRouter();
   const [saving, setSaving] = useState(false);
   const [dateOpen, setDateOpen] = useState(false);
+  const { sendTest, testing } = useTestNotification();
 
   const isEdit = !!reminder;
   const initialTab: Tab = !reminder || reminder.recurrenceType === "NONE" ? "one-time" : "recurring";
@@ -262,13 +264,23 @@ export function ReminderForm({ categories, reminder, onSuccess }: ReminderFormPr
 
       {bottomFields}
 
-      <div className="flex gap-3 pt-1">
+      <div className="flex flex-wrap gap-3 pt-1">
         <Button type="submit" disabled={saving} className="bg-indigo-600 hover:bg-indigo-700">
           {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
           {isEdit ? "Save changes" : "Create reminder"}
         </Button>
         <Button type="button" variant="outline" onClick={() => router.back()}>
           Cancel
+        </Button>
+        <Button
+          type="button"
+          variant="outline"
+          disabled={testing}
+          onClick={() => sendTest(watch("title"), watch("notes") ?? undefined)}
+          className="ml-auto text-indigo-600 border-indigo-200 hover:bg-indigo-50 dark:text-indigo-400 dark:border-indigo-800 dark:hover:bg-indigo-950/30"
+        >
+          {testing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <BellRing className="mr-2 h-4 w-4" />}
+          Test notification
         </Button>
       </div>
     </form>
